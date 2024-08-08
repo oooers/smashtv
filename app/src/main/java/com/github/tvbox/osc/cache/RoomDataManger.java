@@ -4,17 +4,15 @@ import android.text.TextUtils;
 
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.bean.SourceBean;
-import com.github.tvbox.osc.bean.VodInfo;
+import com.github.tvbox.osc.bean.VideoInfo;
+import com.github.tvbox.osc.constans.SystemConstants;
 import com.github.tvbox.osc.data.AppDataManager;
 import com.google.gson.ExclusionStrategy;
-import com.github.tvbox.osc.util.HawkConfig;
-import com.github.tvbox.osc.util.HistoryHelper;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import com.orhanobut.hawk.Hawk;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,10 +25,10 @@ public class RoomDataManger {
     static ExclusionStrategy vodInfoStrategy = new ExclusionStrategy() {
         @Override
         public boolean shouldSkipField(FieldAttributes field) {
-            if (field.getDeclaringClass() == VodInfo.class && field.getName().equals("seriesFlags")) {
+            if (field.getDeclaringClass() == VideoInfo.class && field.getName().equals("seriesFlags")) {
                 return true;
             }
-            if (field.getDeclaringClass() == VodInfo.class && field.getName().equals("seriesMap")) {
+            if (field.getDeclaringClass() == VideoInfo.class && field.getName().equals("seriesMap")) {
                 return true;
             }
             return false;
@@ -46,27 +44,27 @@ public class RoomDataManger {
         return new GsonBuilder().addSerializationExclusionStrategy(vodInfoStrategy).create();
     }
 
-    public static void insertVodRecord(String sourceKey, VodInfo vodInfo) {
-        VodRecord record = AppDataManager.get().getVodRecordDao().getVodRecord(sourceKey, vodInfo.id);
+    public static void insertVodRecord(String sourceKey, VideoInfo videoInfo) {
+        VodRecord record = AppDataManager.get().getVodRecordDao().getVodRecord(sourceKey, videoInfo.id);
         if (record == null) {
             record = new VodRecord();
         }
         record.sourceKey = sourceKey;
-        record.vodId = vodInfo.id;
+        record.vodId = videoInfo.id;
         record.updateTime = System.currentTimeMillis();
-        record.dataJson = getVodInfoGson().toJson(vodInfo);
+        record.dataJson = getVodInfoGson().toJson(videoInfo);
         AppDataManager.get().getVodRecordDao().insert(record);
     }
 
-    public static VodInfo getVodInfo(String sourceKey, String vodId) {
+    public static VideoInfo getVodInfo(String sourceKey, String vodId) {
         VodRecord record = AppDataManager.get().getVodRecordDao().getVodRecord(sourceKey, vodId);
         try {
             if (record != null && record.dataJson != null && !TextUtils.isEmpty(record.dataJson)) {
-                VodInfo vodInfo = getVodInfoGson().fromJson(record.dataJson, new TypeToken<VodInfo>() {
+                VideoInfo videoInfo = getVodInfoGson().fromJson(record.dataJson, new TypeToken<VideoInfo>() {
                 }.getType());
-                if (vodInfo.name == null)
+                if (videoInfo.name == null)
                     return null;
-                return vodInfo;
+                return videoInfo;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,55 +72,51 @@ public class RoomDataManger {
         return null;
     }
 
-    public static void deleteVodRecord(String sourceKey, VodInfo vodInfo) {
-        VodRecord record = AppDataManager.get().getVodRecordDao().getVodRecord(sourceKey, vodInfo.id);
+    public static void deleteVodRecord(String sourceKey, VideoInfo videoInfo) {
+        VodRecord record = AppDataManager.get().getVodRecordDao().getVodRecord(sourceKey, videoInfo.id);
         if (record != null) {
             AppDataManager.get().getVodRecordDao().delete(record);
         }
     }
 
-    public static List<VodInfo> getAllVodRecord(int limit) {
-        int count = AppDataManager.get().getVodRecordDao().getCount();
-        Integer index = Hawk.get(HawkConfig.HISTORY_NUM, 0);
-        Integer hisNum = HistoryHelper.getHisNum(index);
-        if ( count > hisNum ) {
-            AppDataManager.get().getVodRecordDao().reserver(hisNum);
+    public static List<VideoInfo> getAllVodRecord(int limit) {
+        // 超出历史记录
+        if (AppDataManager.get().getVodRecordDao().getCount() > SystemConstants.History.MAX) {
+            AppDataManager.get().getVodRecordDao().reserver(SystemConstants.History.MAX);
         }
+
+        List<VideoInfo> videoInfoList = new ArrayList<>();
         List<VodRecord> recordList = AppDataManager.get().getVodRecordDao().getAll(limit);
-        List<VodInfo> vodInfoList = new ArrayList<>();
         if (recordList != null) {
             for (VodRecord record : recordList) {
-                VodInfo info = null;
-                try {
-                    if (record.dataJson != null && !TextUtils.isEmpty(record.dataJson)) {
-                        info = getVodInfoGson().fromJson(record.dataJson, new TypeToken<VodInfo>() {
-                        }.getType());
-                        info.sourceKey = record.sourceKey;
-                        SourceBean sourceBean = ApiConfig.get().getSource(info.sourceKey);
-                        if (sourceBean == null || info.name == null)
-                            info = null;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                VideoInfo info = null;
+                if (record.dataJson != null && !TextUtils.isEmpty(record.dataJson)) {
+                    info = getVodInfoGson().fromJson(record.dataJson, new TypeToken<VideoInfo>() {
+                    }.getType());
+                    info.sourceKey = record.sourceKey;
+                    SourceBean sourceBean = ApiConfig.get().getSource(info.sourceKey);
+                    if (sourceBean == null || info.name == null)
+                        info = null;
                 }
+
                 if (info != null)
-                    vodInfoList.add(info);
+                    videoInfoList.add(info);
             }
         }
-        return vodInfoList;
+        return videoInfoList;
     }
 
-    public static void insertVodCollect(String sourceKey, VodInfo vodInfo) {
-        VodCollect record = AppDataManager.get().getVodCollectDao().getVodCollect(sourceKey, vodInfo.id);
+    public static void insertVodCollect(String sourceKey, VideoInfo videoInfo) {
+        VodCollect record = AppDataManager.get().getVodCollectDao().getVodCollect(sourceKey, videoInfo.id);
         if (record != null) {
             return;
         }
         record = new VodCollect();
         record.sourceKey = sourceKey;
-        record.vodId = vodInfo.id;
+        record.vodId = videoInfo.id;
         record.updateTime = System.currentTimeMillis();
-        record.name = vodInfo.name;
-        record.pic = vodInfo.pic;
+        record.name = videoInfo.name;
+        record.pic = videoInfo.pic;
         AppDataManager.get().getVodCollectDao().insert(record);
     }
 
@@ -130,13 +124,13 @@ public class RoomDataManger {
         AppDataManager.get().getVodCollectDao().delete(id);
     }
 
-    public static void deleteVodCollect(String sourceKey, VodInfo vodInfo) {
-        VodCollect record = AppDataManager.get().getVodCollectDao().getVodCollect(sourceKey, vodInfo.id);
+    public static void deleteVodCollect(String sourceKey, VideoInfo videoInfo) {
+        VodCollect record = AppDataManager.get().getVodCollectDao().getVodCollect(sourceKey, videoInfo.id);
         if (record != null) {
             AppDataManager.get().getVodCollectDao().delete(record);
         }
     }
-    
+
     public static void deleteVodCollectAll() {
         AppDataManager.get().getVodCollectDao().deleteAll();
     }

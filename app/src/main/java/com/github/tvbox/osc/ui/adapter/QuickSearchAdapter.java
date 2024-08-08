@@ -30,7 +30,7 @@ public class QuickSearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHo
         if (item.note != null && !item.note.isEmpty()) {
             helper.setText(R.id.tvNote, item.note);
         }
-        ImageView ivThumb = helper.getView(R.id.ivThumb);
+        ImageView videoPoster = helper.getView(R.id.videoPoster);
         if (!TextUtils.isEmpty(item.pic)) {
             Picasso.get()
                     .load(item.pic)
@@ -39,10 +39,10 @@ public class QuickSearchAdapter extends BaseQuickAdapter<Movie.Video, BaseViewHo
                             .override(AutoSizeUtils.mm2px(mContext, 300), AutoSizeUtils.mm2px(mContext, 400))
                             .roundRadius(AutoSizeUtils.mm2px(mContext, 10), RoundTransformation.RoundType.ALL))
                     .placeholder(R.drawable.error_loading)
-                    .error(R.drawable.error_loading)
-                    .into(ivThumb);
+                    .error(R.drawable.jpg_vertical_404)
+                    .into(videoPoster);
         } else {
-            ivThumb.setImageResource(R.drawable.error_loading);
+            videoPoster.setImageResource(R.drawable.error_loading);
         }
         */
     }

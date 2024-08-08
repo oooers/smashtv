@@ -65,7 +65,7 @@ public class FastSearchActivity extends BaseActivity {
     private TvRecyclerView mGridViewWord;
     private TvRecyclerView mGridViewWordFenci;
     SourceViewModel sourceViewModel;
-    //    private EditText etSearch;
+    //    private EditText searchText;
 //    private TextView tvSearch;
 //    private TextView tvClear;
 //    private SearchKeyboard keyboard;
@@ -422,7 +422,7 @@ public class FastSearchActivity extends BaseActivity {
                 @Override
                 public void run() {
                     try {
-                        sourceViewModel.getSearch(key, searchTitle);
+                        sourceViewModel.gsearchText(key, searchTitle);
                     } catch (Exception e) {
 
                     }
@@ -487,7 +487,7 @@ public class FastSearchActivity extends BaseActivity {
             if (searchAdapter.getData().size() > 0) {
                 searchAdapter.addData(data);
             } else {
-                showSuccess();
+                closeLoading();
                 if (!isFilterMode)
                     mGridView.setVisibility(View.VISIBLE);
                 searchAdapter.setNewData(data);
