@@ -5,9 +5,10 @@ buildscript {
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }
-        maven { url 'http://home.jundie.top:81/xwalk/maven2'
-                allowInsecureProtocol = true
-              }
+        maven {
+        url 'http://home.jundie.top:81/xwalk/maven2'
+        allowInsecureProtocol = true
+    }
         maven { url "https://maven.aliyun.com/repository/public/" }
     }
     dependencies {
@@ -23,7 +24,10 @@ allprojects {
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }
-        maven { url 'http://home.jundie.top:81/xwalk/maven2' allowInsecureProtocol = true }
+        maven {
+        url 'http://home.jundie.top:81/xwalk/maven2'
+        allowInsecureProtocol = true
+    }
         maven { url "https://maven.aliyun.com/repository/public/" }
     }
 }
